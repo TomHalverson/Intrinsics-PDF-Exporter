@@ -1,0 +1,35 @@
+{
+  "id": "intrinsics-pdf-exporter",
+  "title": "Intrinsics PDF Exporter",
+  "description": "Export Journal Entries to PDF with proper color inversion and spacing preservation. Fixes yellow text and missing spaces issues.",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "Tom"
+    }
+  ],
+  "compatibility": {
+    "minimum": "11",
+    "verified": "13"
+  },
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "scripts": [
+    "lib/jspdf.umd.min.js",
+    "lib/html2canvas.min.js"
+  ],
+  "styles": [
+    "styles/module.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "url": "",
+  "manifest": "",
+  "download": ""
+}

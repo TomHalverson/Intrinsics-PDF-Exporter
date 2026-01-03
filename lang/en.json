@@ -1,0 +1,11 @@
+{
+  "JPDF": {
+    "ModuleName": "Intrinsics PDF Exporter",
+    "ExportPDF": "Export to PDF",
+    "Exporting": "Generating PDF...",
+    "ExportSuccess": "PDF exported successfully",
+    "ExportFailed": "PDF export failed",
+    "NoPages": "Journal has no pages to export",
+    "LibraryError": "Required library not loaded"
+  }
+}

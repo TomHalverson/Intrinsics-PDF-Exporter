@@ -1,0 +1,203 @@
+/**
+ * Journal PDF Enhanced - Styles
+ * Styles for PDF export content
+ */
+
+/* PDF Content Container */
+#pdf-content,
+.journal-pdf-content {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #000000;
+  background-color: #ffffff;
+  padding: 20px;
+}
+
+/* Journal Page */
+.journal-page {
+  margin-bottom: 30px;
+  page-break-after: always;
+}
+
+.journal-page:last-child {
+  margin-bottom: 0;
+}
+
+/* Page Title */
+.journal-page-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000000;
+  text-align: center;
+  margin: 0 0 20px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #333333;
+}
+
+/* Page Content */
+.journal-page-content {
+  color: #000000;
+}
+
+/* Headings in content */
+.journal-page-content h1 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #000000;
+  margin: 20px 0 10px 0;
+}
+
+.journal-page-content h2 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000000;
+  margin: 18px 0 9px 0;
+}
+
+.journal-page-content h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000000;
+  margin: 16px 0 8px 0;
+}
+
+.journal-page-content h4,
+.journal-page-content h5,
+.journal-page-content h6 {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000000;
+  margin: 14px 0 7px 0;
+}
+
+/* Paragraphs */
+.journal-page-content p {
+  margin: 0 0 10px 0;
+  color: #000000;
+}
+
+/* Lists */
+.journal-page-content ul,
+.journal-page-content ol {
+  margin: 10px 0;
+  padding-left: 30px;
+  color: #000000;
+}
+
+.journal-page-content li {
+  margin: 5px 0;
+  color: #000000;
+}
+
+/* Tables */
+.journal-page-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+  color: #000000;
+}
+
+.journal-page-content table th,
+.journal-page-content table td {
+  border: 1px solid #333333;
+  padding: 8px;
+  text-align: left;
+  color: #000000;
+  background-color: transparent;
+}
+
+.journal-page-content table th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+/* Blockquotes */
+.journal-page-content blockquote {
+  margin: 15px 0;
+  padding: 10px 20px;
+  border-left: 4px solid #333333;
+  background-color: #f9f9f9;
+  color: #000000;
+}
+
+/* Code blocks */
+.journal-page-content pre,
+.journal-page-content code {
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #f5f5f5;
+  color: #000000;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.journal-page-content pre {
+  padding: 10px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+/* Images */
+.journal-page-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 15px auto;
+}
+
+/* Links */
+.journal-page-content a {
+  color: #0066cc;
+  text-decoration: underline;
+}
+
+/* Strong/Bold */
+.journal-page-content strong,
+.journal-page-content b {
+  font-weight: bold;
+  color: #000000;
+}
+
+/* Emphasis/Italic */
+.journal-page-content em,
+.journal-page-content i {
+  font-style: italic;
+  color: #000000;
+}
+
+/* Horizontal rules */
+.journal-page-content hr {
+  border: none;
+  border-top: 1px solid #333333;
+  margin: 20px 0;
+}
+
+/* Export button styling */
+.export-pdf-enhanced {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.export-pdf-enhanced:hover {
+  background-color: #c82333;
+}
+
+/* Render container (off-screen) */
+#pdf-render-container {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #000000;
+  background-color: #ffffff;
+}
+
+/* Ensure all text is black in PDF context */
+#pdf-render-container * {
+  color: #000000 !important;
+}
+
+/* Remove dark backgrounds */
+#pdf-render-container *[style*="background"] {
+  background-color: transparent !important;
+}
