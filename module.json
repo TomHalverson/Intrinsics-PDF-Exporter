@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "authors": [
     {
-      "name": "Tom"
+      "name": "Intrinsic"
     }
   ],
   "compatibility": {
@@ -29,7 +29,8 @@
       "path": "lang/en.json"
     }
   ],
-  "url": "",
-  "manifest": "",
-  "download": ""
+  "url": "https://github.com/TomHalverson/Intrinsics-PDF-Exporter",
+  "manifest": "https://raw.githubusercontent.com/TomHalverson/Intrinsics-PDF-Exporter/refs/heads/main/module.json",
+  "download": "https://github.com/TomHalverson/Intrinsics-PDF-Exporter/archive/refs/heads/main.zip"
 }
+
