@@ -1,11 +1,11 @@
 {
   "id": "intrinsics-pdf-exporter",
-  "title": "Intrinsics PDF Exporter",
-  "description": "Export Journal Entries to PDF with proper color inversion and spacing preservation. Fixes yellow text and missing spaces issues.",
-  "version": "1.0.0",
+  "title": "Intrinsics HTML Exporter",
+  "description": "Fast HTML export for Journal Entries. No browser freezing! Export to HTML, then use browser Print-to-PDF or external tools for superior PDF quality.",
+  "version": "2.0.0",
   "authors": [
     {
-      "name": "Intrinsic"
+      "name": "Tom"
     }
   ],
   "compatibility": {
@@ -14,10 +14,6 @@
   },
   "esmodules": [
     "scripts/main.js"
-  ],
-  "scripts": [
-    "lib/jspdf.umd.min.js",
-    "lib/html2canvas.min.js"
   ],
   "styles": [
     "styles/module.css"
@@ -29,8 +25,7 @@
       "path": "lang/en.json"
     }
   ],
-  "url": "https://github.com/TomHalverson/Intrinsics-PDF-Exporter",
-  "manifest": "https://raw.githubusercontent.com/TomHalverson/Intrinsics-PDF-Exporter/refs/heads/main/module.json",
-  "download": "https://github.com/TomHalverson/Intrinsics-PDF-Exporter/archive/refs/heads/main.zip"
+  "url": "",
+  "manifest": "",
+  "download": ""
 }
-

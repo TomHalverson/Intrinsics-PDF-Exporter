@@ -1,151 +1,299 @@
 /**
- * PDF Generator - Core PDF generation with proper html2canvas configuration
- * This fixes both the yellow text and missing spaces issues
+ * HTML Exporter - Export journal content as standalone HTML
+ * Fast and simple - no browser freezing
  */
 
 import { CONFIG } from './config.js';
-import { normalizeJournalContent } from './html-normalizer.js';
-import { processStylesForPDF } from './style-processor.js';
 
 /**
- * Export a journal entry to PDF
+ * Export a journal entry to HTML
  * @param {JournalEntry} journal - The journal entry to export
  * @param {Object} options - Export options
  * @returns {Promise<void>}
  */
 export async function exportJournalToPDF(journal, options = {}) {
-  console.log('Journal PDF Enhanced | Starting PDF export for:', journal.name);
+  console.log('Intrinsics HTML Export | Starting export for:', journal.name);
 
   try {
-    // Step 1: Normalize journal HTML (fixes spacing issues)
-    const normalizedContent = normalizeJournalContent(journal);
+    // Extract journal content
+    console.log('Intrinsics HTML Export | Extracting content...');
+    const content = await extractJournalContent(journal);
 
-    // Step 2: Create temporary render container
-    const container = createRenderContainer(normalizedContent);
+    // Create standalone HTML document
+    console.log('Intrinsics HTML Export | Creating HTML document...');
+    const html = createStandaloneHTML(journal.name, content);
 
-    // Step 3: Process styles for PDF (fixes color issues)
-    processStylesForPDF(container);
+    // Download the HTML file
+    console.log('Intrinsics HTML Export | Saving file...');
+    await downloadHTML(html, journal.name);
 
-    // Step 4: Generate PDF
-    await generatePDF(container, journal, options);
-
-    // Step 5: Cleanup
-    document.body.removeChild(container);
-
-    console.log('Journal PDF Enhanced | PDF export completed successfully');
+    console.log('Intrinsics HTML Export | Export completed successfully!');
   } catch (error) {
-    console.error('Journal PDF Enhanced | Error during PDF export:', error);
+    console.error('Intrinsics HTML Export | Error during export:', error);
     throw error;
   }
 }
 
 /**
- * Create a temporary off-screen render container
- * @param {HTMLElement} content - The content to render
- * @returns {HTMLElement} - The container element
+ * Extract journal content and convert images to base64
+ * @param {JournalEntry} journal - The journal entry
+ * @returns {Promise<string>} - HTML content with embedded images
  */
-function createRenderContainer(content) {
-  const container = document.createElement('div');
-  container.id = 'pdf-render-container';
+async function extractJournalContent(journal) {
+  const pages = journal.pages || journal.collections?.pages;
+  if (!pages) {
+    throw new Error('No pages found in journal');
+  }
 
-  // Apply container styles
-  Object.assign(container.style, {
-    position: CONFIG.RENDER_CONTAINER.position,
-    left: CONFIG.RENDER_CONTAINER.left,
-    top: CONFIG.RENDER_CONTAINER.top,
-    width: `${CONFIG.RENDER_CONTAINER.width}px`,
-    backgroundColor: CONFIG.RENDER_CONTAINER.backgroundColor,
-    padding: '20px',
-    fontFamily: 'Arial, sans-serif',
-    fontSize: '14px',
-    lineHeight: '1.6',
-    color: '#000000'
-  });
+  const pageArray = pages.contents || Array.from(pages.values()) || [];
 
-  // Append content
-  container.appendChild(content);
+  let html = '';
 
-  // Attach to DOM (required for computed styles and rendering)
-  document.body.appendChild(container);
+  for (const [index, page] of pageArray.entries()) {
+    html += '<div class="journal-page">';
+    html += `<h1 class="journal-page-title">${page.name || `Page ${index + 1}`}</h1>`;
 
-  return container;
+    // Get page content and convert images to base64
+    let content = page.text?.content || '';
+    content = await convertImagesToBase64(content);
+
+    html += `<div class="journal-page-content">${content}</div>`;
+    html += '</div>';
+  }
+
+  return html;
 }
 
 /**
- * Generate PDF from rendered container
- * @param {HTMLElement} container - The container element
- * @param {JournalEntry} journal - The journal entry
- * @param {Object} options - Export options
- * @returns {Promise<void>}
+ * Convert all images in HTML to base64 data URIs
+ * @param {string} html - HTML content
+ * @returns {Promise<string>} - HTML with base64 images
  */
-async function generatePDF(container, journal, options = {}) {
-  // Ensure jsPDF is loaded
-  if (typeof window.jspdf === 'undefined') {
-    throw new Error('jsPDF library not loaded');
-  }
+async function convertImagesToBase64(html) {
+  // Create a temporary container to parse HTML
+  const container = document.createElement('div');
+  container.innerHTML = html;
 
-  // Ensure html2canvas is loaded
-  if (typeof window.html2canvas === 'undefined') {
-    throw new Error('html2canvas library not loaded');
-  }
+  // Find all images
+  const images = container.querySelectorAll('img');
 
-  const { jsPDF } = window.jspdf;
-
-  // Create PDF instance
-  const pdf = new jsPDF({
-    orientation: CONFIG.PDF_OPTIONS.orientation,
-    unit: CONFIG.PDF_OPTIONS.unit,
-    format: CONFIG.PDF_OPTIONS.format,
-    compress: CONFIG.PDF_OPTIONS.compress
-  });
-
-  // Get PDF dimensions
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
-  const margin = CONFIG.PDF_OPTIONS.margin.top;
-  const contentWidth = pdfWidth - (margin * 2);
-  const contentHeight = pdfHeight - (margin * 2);
-
-  try {
-    // CRITICAL FIX: Use html2canvas with backgroundColor: null
-    const canvas = await window.html2canvas(container, {
-      ...CONFIG.HTML2CANVAS_OPTIONS,
-      backgroundColor: null,  // CRITICAL: transparent, not white!
-      width: CONFIG.RENDER_CONTAINER.width,
-      windowWidth: CONFIG.RENDER_CONTAINER.width
-    });
-
-    // Calculate dimensions
-    const imgWidth = contentWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = margin;
-
-    // Convert canvas to image data
-    const imgData = canvas.toDataURL('image/png');
-
-    // Add first page
-    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-    heightLeft -= contentHeight;
-
-    // Add additional pages if content is longer than one page
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight + margin;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-      heightLeft -= contentHeight;
+  // Convert each image to base64
+  for (const img of images) {
+    const src = img.getAttribute('src');
+    if (!src || src.startsWith('data:')) {
+      continue; // Skip if already base64 or no src
     }
 
-    // Save PDF
-    const filename = `${sanitizeFilename(journal.name)}.pdf`;
-    pdf.save(filename);
-
-    console.log(`Journal PDF Enhanced | PDF saved as: ${filename}`);
-  } catch (error) {
-    console.error('Journal PDF Enhanced | Error generating PDF:', error);
-    throw error;
+    try {
+      const base64 = await fetchImageAsBase64(src);
+      if (base64) {
+        img.setAttribute('src', base64);
+      }
+    } catch (error) {
+      console.warn('Failed to convert image to base64:', src, error);
+      // Keep original src on failure
+    }
   }
+
+  return container.innerHTML;
+}
+
+/**
+ * Fetch an image and convert to base64 data URI
+ * @param {string} url - Image URL
+ * @returns {Promise<string>} - Base64 data URI
+ */
+async function fetchImageAsBase64(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const blob = await response.blob();
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Failed to fetch image:', url, error);
+    return null;
+  }
+}
+
+/**
+ * Create a standalone HTML document with embedded CSS
+ * @param {string} title - Document title
+ * @param {string} content - HTML content
+ * @returns {string} - Complete HTML document
+ */
+function createStandaloneHTML(title, content) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    /* Print-friendly styles */
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      color: #000000;
+      background-color: #ffffff;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Page breaks */
+    .journal-page {
+      page-break-after: always;
+      margin-bottom: 40px;
+    }
+
+    .journal-page:last-child {
+      page-break-after: auto;
+    }
+
+    /* Titles */
+    .journal-page-title {
+      font-size: 24pt;
+      font-weight: bold;
+      text-align: center;
+      margin: 0 0 20px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #333333;
+      color: #000000;
+    }
+
+    /* Content */
+    .journal-page-content {
+      color: #000000;
+    }
+
+    /* Force readable colors */
+    .journal-page-content * {
+      color: #000000 !important;
+      background-color: transparent !important;
+    }
+
+    /* Tables */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1em 0;
+    }
+
+    th, td {
+      border: 1px solid #333333;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f0f0f0 !important;
+      font-weight: bold;
+    }
+
+    /* Images */
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        padding: 0;
+      }
+
+      .journal-page {
+        page-break-after: always;
+      }
+
+      .journal-page:last-child {
+        page-break-after: auto;
+      }
+    }
+
+    /* Headings */
+    h1, h2, h3, h4, h5, h6 {
+      color: #000000 !important;
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+    }
+
+    /* Links */
+    a {
+      color: #0066cc !important;
+      text-decoration: underline;
+    }
+
+    @media print {
+      a {
+        color: #000000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  ${content}
+</body>
+</html>`;
+}
+
+/**
+ * Download HTML as a file
+ * @param {string} html - HTML content
+ * @param {string} journalName - Journal name for filename
+ */
+function downloadHTML(html, journalName) {
+  const filename = `${sanitizeFilename(journalName)}.html`;
+
+  // Create blob and download link
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+
+  // Use saveDataToFile from Foundry's core utilities if available (better desktop support)
+  if (typeof saveDataToFile === 'function') {
+    saveDataToFile(blob, 'text/html', filename);
+    return;
+  }
+
+  // Fallback: Traditional browser download
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+
+  // Make the click more reliable
+  document.body.appendChild(link);
+  link.dispatchEvent(new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    view: window
+  }));
+
+  // Cleanup after download starts
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 250);
+}
+
+/**
+ * Escape HTML special characters
+ * @param {string} text - Text to escape
+ * @returns {string} - Escaped text
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 /**
@@ -158,90 +306,4 @@ function sanitizeFilename(filename) {
     .replace(/[^a-z0-9]/gi, '_')
     .replace(/_+/g, '_')
     .toLowerCase();
-}
-
-/**
- * Alternative approach: Use jsPDF's html() method
- * This is simpler but less customizable
- * @param {HTMLElement} container - The container element
- * @param {JournalEntry} journal - The journal entry
- * @returns {Promise<void>}
- */
-export async function exportJournalToPDFAlternative(journal) {
-  console.log('Journal PDF Enhanced | Using alternative PDF export method');
-
-  try {
-    // Normalize and process content
-    const normalizedContent = normalizeJournalContent(journal);
-    const container = createRenderContainer(normalizedContent);
-    processStylesForPDF(container);
-
-    // Ensure jsPDF is loaded
-    if (typeof window.jspdf === 'undefined') {
-      throw new Error('jsPDF library not loaded');
-    }
-
-    const { jsPDF } = window.jspdf;
-
-    // Create PDF instance
-    const pdf = new jsPDF({
-      orientation: CONFIG.PDF_OPTIONS.orientation,
-      unit: 'pt',
-      format: CONFIG.PDF_OPTIONS.format
-    });
-
-    // Use jsPDF's html() method with proper options
-    await pdf.html(container, {
-      callback: function(doc) {
-        const filename = `${sanitizeFilename(journal.name)}.pdf`;
-        doc.save(filename);
-        console.log(`Journal PDF Enhanced | PDF saved as: ${filename}`);
-      },
-      x: CONFIG.PDF_OPTIONS.margin.left,
-      y: CONFIG.PDF_OPTIONS.margin.top,
-      width: 600,
-      windowWidth: 800,
-      html2canvas: {
-        ...CONFIG.HTML2CANVAS_OPTIONS,
-        backgroundColor: null  // CRITICAL FIX
-      }
-    });
-
-    // Cleanup
-    document.body.removeChild(container);
-
-  } catch (error) {
-    console.error('Journal PDF Enhanced | Error during alternative PDF export:', error);
-    throw error;
-  }
-}
-
-/**
- * Show export progress notification
- * @param {string} message - Progress message
- */
-function showProgress(message) {
-  if (ui?.notifications) {
-    ui.notifications.info(message);
-  }
-}
-
-/**
- * Show export error notification
- * @param {string} message - Error message
- */
-function showError(message) {
-  if (ui?.notifications) {
-    ui.notifications.error(message);
-  }
-}
-
-/**
- * Show export success notification
- * @param {string} message - Success message
- */
-function showSuccess(message) {
-  if (ui?.notifications) {
-    ui.notifications.success(message);
-  }
 }

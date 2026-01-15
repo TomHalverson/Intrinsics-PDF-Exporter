@@ -1,13 +1,13 @@
 /**
- * Intrinsics PDF Exporter - Main Entry Point
- * Fixes yellow text and missing spaces in PDF exports
+ * Intrinsics HTML Exporter - Main Entry Point
+ * Exports journal entries as standalone HTML files for PDF conversion
  */
 
 import { exportJournalToPDF } from './pdf-generator.js';
 
 // Module constants
 const MODULE_ID = 'intrinsics-pdf-exporter';
-const MODULE_NAME = 'Intrinsics PDF Exporter';
+const MODULE_NAME = 'Intrinsics HTML Exporter';
 
 /**
  * Initialize module
@@ -26,40 +26,36 @@ Hooks.once('init', function() {
  */
 Hooks.once('ready', function() {
   console.log(`${MODULE_NAME} | Module ready`);
-
-  // Verify required libraries are loaded
-  if (typeof window.jspdf === 'undefined') {
-    console.error(`${MODULE_NAME} | jsPDF library not loaded!`);
-    ui.notifications.error(`${MODULE_NAME}: jsPDF library failed to load`);
-  }
-
-  if (typeof window.html2canvas === 'undefined') {
-    console.error(`${MODULE_NAME} | html2canvas library not loaded!`);
-    ui.notifications.error(`${MODULE_NAME}: html2canvas library failed to load`);
-  }
-
-  // Show ready notification
-  console.log(`${MODULE_NAME} | Ready to export journals to PDF`);
+  console.log(`${MODULE_NAME} | Ready to export journals to HTML`);
 });
 
 /**
- * Add "Export to PDF" button to journal sheet headers
+ * Add "Export to HTML" button to journal sheet headers
  */
 Hooks.on('getJournalSheetHeaderButtons', (app, buttons) => {
   // Add export button at the beginning of the buttons array
   buttons.unshift({
-    label: 'PDF',
-    class: 'export-pdf-enhanced',
-    icon: 'fas fa-file-pdf',
+    label: 'HTML',
+    class: 'export-html',
+    icon: 'fas fa-file-code',
     onclick: () => handleExportClick(app)
   });
 });
+
+// Track if export is in progress to prevent multiple simultaneous exports
+let exportInProgress = false;
 
 /**
  * Handle export button click
  * @param {JournalSheet} app - The journal sheet application
  */
 async function handleExportClick(app) {
+  // Prevent multiple simultaneous exports
+  if (exportInProgress) {
+    ui.notifications.warn(`${MODULE_NAME}: Export already in progress, please wait...`);
+    return;
+  }
+
   const journal = app.object;
 
   console.log(`${MODULE_NAME} | Export button clicked for journal:`, journal.name);
@@ -71,19 +67,23 @@ async function handleExportClick(app) {
     return;
   }
 
+  exportInProgress = true;
+
   try {
     // Show progress notification
-    ui.notifications.info(`Generating PDF for "${journal.name}"...`);
+    ui.notifications.info(`Exporting "${journal.name}" to HTML...`);
 
-    // Export to PDF
+    // Export to HTML (instant, no delay needed)
     await exportJournalToPDF(journal);
 
-    // Show success notification
-    ui.notifications.success(`PDF exported successfully: ${journal.name}.pdf`);
+    // Show success notification with instructions
+    ui.notifications.success(`HTML exported: ${journal.name}.html - Open in browser and use Print to PDF`);
 
   } catch (error) {
     console.error(`${MODULE_NAME} | Export failed:`, error);
-    ui.notifications.error(`PDF export failed: ${error.message}`);
+    ui.notifications.error(`HTML export failed: ${error.message}. Check console for details.`);
+  } finally {
+    exportInProgress = false;
   }
 }
 
